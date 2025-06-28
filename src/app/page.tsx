@@ -56,7 +56,7 @@ function GreetingAndBio() {
 
 // Profile picture to display on home page.
 function ProfilePicture() {
-  return <Image src="/personal-website/rome_photo.jpg" width={400} height={400} alt="Picture of Ashish Rao" className="rounded-lg" />;
+  return <Image src="/personal-website/rome_photo.jpg" width={400} height={533} alt="Picture of Ashish Rao" className="rounded-lg" />;
 }
 
 // Main home page component.
