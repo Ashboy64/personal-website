@@ -42,7 +42,7 @@ function GreetingAndBio() {
     <div className="max-w-lg">
       <Greeting />
       <p className="text-lg">
-        I&apos;m Ashish Rao, a software engineer at Nvidia working on JAX
+        I&apos;m Ashish Rao, a soon-to-be software engineer at Nvidia working on JAX
         (a Python library to write hardware accelerated numerical programs).
         I&apos;m broadly interested in AI, programming languages, compilers,
         and distributed systems. In my free time, I like reading and going
