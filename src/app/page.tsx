@@ -12,7 +12,7 @@ function Greeting() {
 
 // Blog, resume, and social media links.
 function Links() {
-  const resumeUrl = "/personal-website/resume.pdf";
+  const resumeUrl = "/resume.pdf";
   const twitterUrl = "https://x.com/Ashboy64";
   const linkedinUrl = "https://www.linkedin.com/in/ashishprao/";
 
@@ -41,11 +41,12 @@ function GreetingAndBio() {
     <div className="max-w-lg">
       <Greeting />
       <p className="text-lg">
-        I'm Ashish Rao, a software engineer at Nvidia working on JAX (a Python
-        library to write hardware accelerated numerical programs). I'm broadly
-        interested in AI, programming languages, compilers, and distributed
-        systems. In my free time, I like reading and going swing dancing. Check
-        out my blog, and feel free to say hello via email to <em>ashish dot arartc at gmail.com</em>.
+        I&apos;m Ashish Rao, a software engineer at Nvidia working on JAX 
+        (a Python library to write hardware accelerated numerical programs). 
+        I&apos;m broadly interested in AI, programming languages, compilers, 
+        and distributed systems. In my free time, I like reading and going 
+        swing dancing. Check out my blog, and feel free to say hello via email 
+        to <em>ashish dot arartc at gmail.com</em>.
       </p>
       <Links />
     </div>
@@ -54,7 +55,7 @@ function GreetingAndBio() {
 
 // Profile picture to display on home page.
 function ProfilePicture() {
-  return <Image src="/personal-website/rome_photo.jpg" width={400} height={400} alt="Picture of Ashish Rao" className="rounded-lg" />;
+  return <Image src="/rome_photo.jpg" width={400} height={400} alt="Picture of Ashish Rao" className="rounded-lg" />;
 }
 
 // Main home page component.

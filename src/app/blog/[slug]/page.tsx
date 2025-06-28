@@ -33,13 +33,13 @@ export async function generateStaticParams() {
 }
 
 // Component for the blog post.
-export default async function BlogPostPage({ params }: { params: { slug: string } }) {
+export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params;
     const { content, meta } = await getPost(slug);
 
     return (
         <main className="max-w-3xl mx-auto p-8">
-        <h1 className="text-5xl font-bold mb-2 mt-16">{meta.title}</h1>
+            <h1 className="text-5xl font-bold mb-2 mt-16">{meta.title}</h1>
             <p className="text-gray-500 mb-8">{new Date(meta.date).toLocaleDateString('en-US', { timeZone: 'UTC', year: 'numeric', month: 'long', day: 'numeric' })}</p>
 
             <article className="prose lg:prose-lg">
