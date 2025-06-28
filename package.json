@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:local": "next build && npm run organize-for-local",
+    "organize-for-local": "mkdir -p out/personal-website && cp -r out/_next out/404 out/blog out/*.html out/*.txt out/*.pdf out/*.jpg out/personal-website/ 2>/dev/null || true",
     "start": "next start",
     "lint": "next lint"
   },

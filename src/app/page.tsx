@@ -5,8 +5,6 @@ import Link from "next/link";
 import React from 'react';
 
 
-const isProd = process.env.NODE_ENV === 'production';
-
 // Greeting on home page.
 function Greeting() {
   return <h1 className="text-5xl font-bold mb-8">Hello!</h1>;
@@ -14,7 +12,8 @@ function Greeting() {
 
 // Blog, resume, and social media links.
 function Links() {
-  const resumeUrl = (isProd ? "/personal_website/" : "/") + "resume.pdf";
+  // const resumeUrl = (isProd ? "/personal-website/" : "/") + "/resume.pdf";
+  const resumeUrl = "/personal-website/resume.pdf";
   const twitterUrl = "https://x.com/Ashboy64";
   const linkedinUrl = "https://www.linkedin.com/in/ashishprao/";
 
@@ -57,7 +56,7 @@ function GreetingAndBio() {
 
 // Profile picture to display on home page.
 function ProfilePicture() {
-  return <Image src={(isProd ? "/personal_website/" : "/") + "rome_photo.jpg"} width={400} height={400} alt="Picture of Ashish Rao" className="rounded-lg" />;
+  return <Image src="/personal-website/rome_photo.jpg" width={400} height={400} alt="Picture of Ashish Rao" className="rounded-lg" />;
 }
 
 // Main home page component.
