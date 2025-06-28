@@ -47,7 +47,6 @@ export default async function BlogLandingPage() {
 
             <div className="w-full flex justify-end mb-12">
                 <Link href="/" className="flex items-center gap-2 text-lg font-semibold text-gray-700 hover:text-black hover:underline transition-colors">
-                    {/* <FaArrowLeft /> */}
                     About
                 </Link>
             </div>

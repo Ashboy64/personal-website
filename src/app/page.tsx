@@ -5,6 +5,8 @@ import Link from "next/link";
 import React from 'react';
 
 
+const isProd = process.env.NODE_ENV === 'production';
+
 // Greeting on home page.
 function Greeting() {
   return <h1 className="text-5xl font-bold mb-8">Hello!</h1>;
@@ -12,7 +14,7 @@ function Greeting() {
 
 // Blog, resume, and social media links.
 function Links() {
-  const resumeUrl = "/resume.pdf";
+  const resumeUrl = (isProd ? "/personal_website/" : "/") + "resume.pdf";
   const twitterUrl = "https://x.com/Ashboy64";
   const linkedinUrl = "https://www.linkedin.com/in/ashishprao/";
 
@@ -41,11 +43,11 @@ function GreetingAndBio() {
     <div className="max-w-lg">
       <Greeting />
       <p className="text-lg">
-        I&apos;m Ashish Rao, a software engineer at Nvidia working on JAX 
-        (a Python library to write hardware accelerated numerical programs). 
-        I&apos;m broadly interested in AI, programming languages, compilers, 
-        and distributed systems. In my free time, I like reading and going 
-        swing dancing. Check out my blog, and feel free to say hello via email 
+        I&apos;m Ashish Rao, a software engineer at Nvidia working on JAX
+        (a Python library to write hardware accelerated numerical programs).
+        I&apos;m broadly interested in AI, programming languages, compilers,
+        and distributed systems. In my free time, I like reading and going
+        swing dancing. Check out my blog, and feel free to say hello via email
         to <em>ashish dot arartc at gmail.com</em>.
       </p>
       <Links />
@@ -55,7 +57,7 @@ function GreetingAndBio() {
 
 // Profile picture to display on home page.
 function ProfilePicture() {
-  return <Image src="/rome_photo.jpg" width={400} height={400} alt="Picture of Ashish Rao" className="rounded-lg" />;
+  return <Image src={(isProd ? "/personal_website/" : "/") + "rome_photo.jpg"} width={400} height={400} alt="Picture of Ashish Rao" className="rounded-lg" />;
 }
 
 // Main home page component.
