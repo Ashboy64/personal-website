@@ -2,8 +2,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import React, { useState, useEffect } from 'react';
-
+import React from 'react';
 
 
 // Greeting on home page.
@@ -13,7 +12,7 @@ function Greeting() {
 
 // Blog, resume, and social media links.
 function Links() {
-  const resumeUrl = "/resume.pdf";
+  const resumeUrl = "/personal-website/resume.pdf";
   const twitterUrl = "https://x.com/Ashboy64";
   const linkedinUrl = "https://www.linkedin.com/in/ashishprao/";
 
@@ -55,7 +54,7 @@ function GreetingAndBio() {
 
 // Profile picture to display on home page.
 function ProfilePicture() {
-  return <Image src="/rome_photo.jpg" width={400} height={400} alt="Picture of Ashish Rao" className="rounded-lg" />;
+  return <Image src="/personal-website/rome_photo.jpg" width={400} height={400} alt="Picture of Ashish Rao" className="rounded-lg" />;
 }
 
 // Main home page component.
