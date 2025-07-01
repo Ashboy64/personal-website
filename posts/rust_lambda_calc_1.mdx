@@ -75,107 +75,22 @@ Weak-head normal form (WHNF) means that a lambda expression has no redexes along
 
 The left spine of the expression consists of the nodes on the far left hand-side of the image, namely, the two function applications and the free variable $x$. Since there are no redexes along the left spine, we will consider this expression to be fully evaluated. Note however that there are still redexes that could be reduced in the right subtree of the root node. An alternative to WHNF is _normal form_, which specifies that the expression contains no more redexes whatsoever, and would require us to reduce the redexes in the right subtree as well. It's possible that normal form evaluation might cause us to evaluate some expressions that never get used, so my implementation only reduces expressions to WHNF (I believe that for a similar reason, some real-world languages like Haskell also adopt WHNF semantics).
 
-
-
 ## Rust
 
+Rust is a programming language that prioritizes safety and performance. Its flagship feature is its 'ownership' system, which is designed to minimize memory errors common in C/C++ (double-frees, use-after-frees, memory leaks) while avoiding the overhead of garbage collection. Below I give a brief introduction to Rust's ownership system, but I'd highly recommend working through the [Rust book](https://doc.rust-lang.org/book/) to learn more.
 
-## The Lambda Calculus
+When a Rust program is executing, data is produced and stored in memory (call such data _values_). In Rust, each value is associated with an _owner_. Owners can be:
+- Variables (most common).
+- Formal parameters of functions.
+- Containers like structs, enums (Rust's name for algebraic data types), tuples.
 
-### Syntax
+Note that both values and owners are *dynamic*; they are produced and change as a program executes. However, Rust enforces certain ownership rules *statically* to ensure memory safety. These rules are that:
+- Each value has an owner.
+- There exists only one owner of a value at any point during execution.
+- When program execution proceeds to a point where, for some value, its owner is no longer associated with an indentifier in the code (i.e. the value's owner has gone out of scope), that value is deallocated.
 
-A program in the lambda calculus is a single big _lambda expression_. A lambda expression is either:
+So far, this sounds pretty simple -- we deallocate values when they go out of scope. The catch is that values might be _aliased_; multiple variables might refer to the same data during execution. We need a way to pick one of them as the unique owner, and ensure that it is not possible to continue to use the other variables referring to that value when the owner goes out of scope.
 
-- A _variable_, e.g. $x$.
-- A _lambda abstraction_, e.g. $\lambda x. e$ where e is another lambda expression. Lambda abstractions define functions. For example, the program $\lambda x. x$ translates to "given any value $x$, return $x$"; it defines the identity function.
-- A _function application_, e.g. $e_1 e_2$, where e_2 and e_2 are both lambda expressions.
+To resolve this, the programmer tells the Rust compiler which variable / function parameter / container is the unique owner of some value in the program they write. The other variables through which that value can be accessed are _references_. References _borrow_ values from their owners, and when a reference goes out-of-scope, the underlying value is *not* deallocated (this only happens when the owner goes out-of-scope). References are basically pointers, but Rust's ownership / borrowing rules guarantee that they will always point to valid memory. 
 
-A grammar for the lambda calculus can be given as:
-
-$$
-e \rightarrow x | \lambda x. e | e e | (e)
-$$
-
-Here is an example program in the lambda calculus:
-$$
-(\lambda z. (\lambda x. \lambda y. x) z) (\lambda a. a) ( \lambda b. \lambda c. c)
-$$
-
-A natural question to ask is: given such a program, how do we execute it?
-
-### Execution
-
-We execute lambda calculus programs by repeatedly rewriting the string in accordance to certain `computation rules'. For example, 
-
-$$
-\begin{align*}
-    ((\lambda x. \lambda y. y x) & (\lambda a. a)) (\lambda b. b) \\
-    & \rightarrow (\lambda y. y (\lambda a. a)) (\lambda b. b) \\
-    & \rightarrow (\lambda b. b) (\lambda a. a) \\
-    & \rightarrow \lambda a. a
-\end{align*}
-$$
-
-We will define the final string we produce as a result of our computation rules (in this case $\lambda a. a$) to be the result of executing our program.
-
-#### Beta Reduction
-
-The most important computation rule of the lambda calculus is _beta reduction_. Beta reduction is a computation rule which says that when we have a lambda abstraction applied to some lambda expression, we should substitute the lambda expression for every occurrence of the lambda abstraction variable in the lambda abstraction body. We write this computation rule as:
-
-$$
-(\lambda x. e_1) e_2 \rightarrow e_1 [x := e_2]
-$$
-
-where $e_1 [x := e_2]$ represents our substitution operation. For a concrete example, consider the expression $(\lambda x. x) y$. We see that the expression is a function application, with the function $\lambda x. x$ being a lambda abstraction. Thus, this is an expression to which we can apply beta substitution. The output of beta substitution will just be $y$; we will substitute every occurrence of the formal parameter $x$ in the lambda abstraction body (which is just the variable $x$), so we are left with the output $y$. The program $(\lambda x. x) y$ thus evaluates to $y$, which makes intuitive sense because the program itself corresponds to applying the identity function on a variable $y$, which we expect to just give $y$ back as the output.
-
-We can formally define our substitution operation $a [x := e]$ like so:
-
-$$
-\begin{align*}
-    & x [x := e] = e \\
-    & y [x := e] = y \\
-    & (e_1 e_2) [x:=e] = (e_1 [x:=e]) (e_2 [x:=2]) \\
-    & (\lambda x. e_1) [x:=e] = \lambda x. e_1 \\
-    & (\lambda y. e_1) [x:=e] = \lambda y.(e_1 [x := e]) \text{ if x != y and y is not a free variable of $e$} \\
-\end{align*}
-$$
-
-The last two cases require some elaboration. 
-
-First, the rule $ (\lambda x. e_1) [x:=e] = \lambda x. e_1 $ specifies that if we are substituting a variable $x$ with $e$ in an expression $\lambda x. e_1$, we will not perform any edits to the expression because the lambda abstraction 'rebinds' the same variable. As an analogy, consider this C code:
-
-```
-int x = 0;
-
-int add_one(int x) {
-    return x + 1;
-}
-```
-
-Since the function `add_one` takes in a variable $x$ as an argument, the value of the global variable $x$ does not effect the function's output. This kind of scoping is what the second-to-last rule reflect.
-
-As for the last rule, consider the following program:
-
-$$
-(\lambda x. \lambda y. x y) y
-$$
-
-If we applied the rule without the condition "... if x != y and y is not a free variable of $e$", we would produce the following string:
-
-$$
-\lambda y. y y
-$$
-
-This string represents the program 'given some input y, return the output of applying y to itself'. However, this is _not_ what the original program actually represents. The value $y$ in our original program $(\lambda x. \lambda y. x y) y$ to which we applied $(\lambda x. \lambda y. x y)$ is a _free variable_; it is not bound by any lambda abstraction. We could have just as well called it $a$, or $very\_cool\_variable$, or $abracadabra$. If we called it $a$, we would produce the following result:
-
-$$
-\begin{align*}
-    (\lambda x. &\lambda y. x y) a \\
-    &\rightarrow \lambda y. x a
-\end{align*}
-$$
-
-This result has an entirely different meaning than $\lambda y. y y$, the string we obtain if we 'naively' applied the substitution. The problem is that in the naive case, the expression we are substituting $x$ for contains free variables that are bound by inner lambda abstractions of the expression we are substituting into. 
-
-
-#### Alpha Conversion
+To do this, each reference is associated with a _lifetime_. A reference's lifetime is the region of code where it can be used. Rust's borrow checker infers lifetimes for all references in a program and makes sure that every reference's lifetime does not exceed the lifetime of the value's owner (programmers might have to specify some lifetime information manually though, particularly at function calls and when defining structs).
