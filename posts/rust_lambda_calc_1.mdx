@@ -1,16 +1,86 @@
 ---
-title: 'Building a Lambda Calculus Interpreter in Rust'
+title: 'A Lambda Calculus Interpreter in Rust'
 date: '2025-06-28'
 description: "Notes of functional programming and Rust's ownership system"
 ---
 
+<figure>
+  <img src="/personal-website/rust_lambda_calc_1/van_gogh_almond_blossoms.jpg" alt="Van Gogh's Almond Blossoms"/>
+  <figcaption className="text-center">_Almond Blossoms_, Vincent Van Gogh, 1890</figcaption>
+</figure>
+
 ## Introduction
 
-The early 20th century saw the discovery of paradoxes and inconsistencies in set theory, a foundational branch of mathematics on whose axioms and result the rest of the subject depends. These paradoxes led mathematicians to probe the nature of logic itself, and attempt to understand the limits of axiomatic knowledge and formal systems. The study of how logic, knowledge, and deduction could be formalized led to the invention of abstract systems of computation, and in turn, the field of computer science itself. Among the systems of computation developed to understand the nature of logic was the lambda calculus. Invented by Alonzo Church in the 1930s, the lambda calculus remains foundational to the theory of programming langauges, and forms the basis for modern functional languages like Haskell and OCaml.
+The early 20th century saw the discovery of paradoxes and inconsistencies in set theory, a foundational branch of mathematics on whose results much of the rest of the subject depends. These paradoxes led mathematicians to probe the nature of logic itself and attempt to understand the limits of formal systems. The study of how logic, knowledge, and deduction could be formalized led to the invention of abstract systems of computation, and in turn, the field of computer science itself. Among the systems of computation developed to understand the nature of logic was the lambda calculus. Invented by Alonzo Church in the 1930s, the lambda calculus remains central to the theory of programming langauges, and forms the basis for modern functional languages like Haskell and OCaml.
 
-I was first exposed to the lambda calculus during a programming languages course I took at college during fall 2024; this was probably my favorite course I ever took during my time at university. The first half of the course focused on foundational topics like the lamdba calculus and type theory, and the second half was more of a survey of some different modern programming languages. Among these was the Rust, which is growing increasingly popular, and features a unique type system designed to guarantee memory safety without the overhead of runtime garbage collection. I thought a fun way to revisit some of the concepts we covered in this course would be to build an interpreter for the lambda calculus in Rust, which is the main topic of the blog post you are now reading :)
+I was first exposed to the lambda calculus during a programming languages course I took at college during fall 2024; this was probably my favorite course I ever took during my time at university. The first half of the course focused on foundational topics like the lamdba calculus and type theory, and the second half was more of a survey of some different modern programming languages. Among these was the Rust, which is growing increasingly popular, and features a unique type system designed to guarantee memory safety without the overhead of runtime garbage collection. I thought a fun way to revisit some of the concepts we covered in this course would be to build an interpreter for the lambda calculus in Rust; this is the topic of the blog post you are now reading :)
 
-## Appendix: The Lambda Calculus
+## The Lambda Calculus: A Whirlwind Tour
+
+Below I give a very brief introduction to the lambda calculus. This is honestly kind of a large topic, and I've tried to give the bare minimum background needed here to understand the later sections of this post. If you haven't heard of the lambda calculus before, I'd highly recommend learning more using the [CS 242 lecture slides](https://web.stanford.edu/class/cs242/), or the first few chapters of this [wonderful textbook](https://simon.peytonjones.org/assets/pdfs/slpj-book-1987-searchable.pdf) I found.
+
+
+### Syntax
+
+Programs in the lambda calculus are composed of variables, function definitions, and function applications. Function definitions are written as $\lambda x. e$; this defines a function that given an input, returns $e$ where every occurrence of $x$ inside $e$ is replaced with the input that was provided. We use currying to represent functions that require multiple arguments. For example, if we have a function $f(x, y) = x$, we can write this as $\lambda x. \lambda y. x$. This defines a function that given an input $x$ returns _another_ function which, when given the input $y$, returns the value $x$. Function application is written as $e_1 e_2$ (this denotes that we apply the function defined by $e_1$ to $e_2$). Parentheses can be used to specify association. By default, we will have lambda abstractions bind to as much as the string that follows as possible, stopping only at the end of the string or a closing parenthesis that was not previously opened inside the lambda. This means that the program $(\lambda x. \lambda y. x) z$ should be interpreted as $(\lambda x. (\lambda y. x)) z$. Additionally, function application will by default be left-associative; i.e. $x y z$ should be interpreted as $(x y) z$.
+
+Here are some example programs:
+
+- $ (\lambda x. \lambda y. x) a b $
+    - The expression in parentheses ($\lambda x. \lambda y. x$), is a function that takes in two arguments $x$ and $y$, and always returns the first argument $x$. 
+    - We apply this function to $a$ and $b$, so the the program will evaluate to $a$ because $a$ was bound to $x$.
+
+- $ \lambda f. \lambda x. x $
+    - This is a function that given another function $f$ and an argument $x$, directly returns $x$.
+    - Whole numbers can be encoded in the lambda calculus using 'Church encoding', which represents $n$ as a function that given a function $f$ and an input $x$, returns the result of applying $f$ to $x$ a total of $n$ times.
+    - Thus, the above function corresponds to the number $0$ in Church encoding.
+
+- $ \lambda n. \lambda f. \lambda x. f (n f x)$
+    - This function takes in a whole number $n$ in Church encoding. It returns a function that takes in an argument $f$, an argument $x$, and produces as output the expression $f (n f x)$, which corresponds to applying $f$ one more time after applying it $n$ times to $f$.
+    - Thus, this function computes $n+1$ given $n$; it is the 'successor' function for whole numbers.
+
+
+### Computation Rules
+
+Now that we know how to write lambda calculus programs, how do we execute them? Execution involves repeatedly applying a set of computation rules. The most important of these is _beta reduction_, which says that when we have a lambda abstraction applied to some lambda expression (called a _redex_), we should substitute the lambda expression for every occurrence of the lambda abstraction variable in the lambda abstraction body. For a concrete example, consider the expression $(\lambda x. x) y$. We see that the expression is a function application, with the function $\lambda x. x$ being a lambda abstraction. Thus, this is a redex, i.e. this is an expression to which we can apply beta reduction. To do so, we will substitute the input $y$ for every occurrence of the formal parameter $x$ in the lambda abstraction body. This gives the result $y$. Since we no longer have any redexes, we have finished executing the program, with $y$ being the final result.
+
+There is a complication with beta reduction however. Consider the following program:
+
+$$
+(\lambda x. \lambda y. x y) y
+$$
+
+If we applied beta reduction 'naively', we would produce the following string:
+
+$$
+\lambda y. y y
+$$
+
+This string represents the program 'given some input y, return the output of applying y to itself'. However, this is _not_ what the original program actually represents. The value $y$ to which we applied $(\lambda x. \lambda y. x y)$ is a _free variable_; it is not bound by any lambda abstraction. We can rename the formal parameter $y$ to get an equivalent program $(\lambda x. \lambda y'. x y') y$, which when reduced gives us $\lambda y' y y'$. This result has an entirely different meaning than $\lambda y. y y$, the string we obtain if we naively applied beta reduction. 
+
+The problem is that in the naive case, the expression we are substituting $x$ for contains free variables that are bound by inner lambda abstractions of the expression we are substituting into. This issue is known as _variable capture_. To avoid variable capture, we will use another computation rule called _alpha conversion_, which just specifies that when we detect any instances where variable capture will occur, we will rename the formal parameter to prevent it. In other words, we will make sure to detect whenever we are performing a reduction like $(\lambda x. \lambda y. x y) y$, and when we do, we will rename the lambda abstraction to be $(\lambda x. \lambda y'. x y') y$ instead.
+
+### Reduction order
+
+Two natural questions arise from the above discussion: (1) in what order should we reduces redexes, and (2) when do we stop applying computation rules? My implementation reduces expressions using the _call-by-name_ reduction order until the expression is in _weak head normal form_. 
+
+Call-by-name evaluation evaluates an expression only when it is actually used. For example, let's say that we have a program that looks like $(\lambda x. e_1) e_2$. Under call-by-name, we will first substitute every instance of $x$ inside $e_1$ with $e_2$ _without_ first evaluating $e_2$; $e_2$ will only be evaluated when its value is needed for some computation inside $e_1$. This is in contrast to _call-by-value_ reduction order, which would first evaluate $e_2$ before performing substitutions into $e_1$. Another way to understand call-by-name evaluation is to see that it always reduces the uppermost, leftmost redex first while evaluating a program.
+
+Weak-head normal form (WHNF) means that a lambda expression has no redexes along its 'left spine'. For example, consider the lambda expression $(x y) (\lambda z. z) (\lambda a. \lambda b. a b)$. We can think of this program as a tree that looks like the following:
+
+<figure>
+  <img src="/personal-website/rust_lambda_calc_1/left_spine_image.jpg" alt="Lambda calculus AST example"/>
+  <figcaption className="text-center">Lambda calculus AST example</figcaption>
+</figure>
+
+The left spine of the expression consists of the nodes on the far left hand-side of the image, namely, the two function applications and the free variable $x$. Since there are no redexes along the left spine, we will consider this expression to be fully evaluated. Note however that there are still redexes that could be reduced in the right subtree of the root node. An alternative to WHNF is _normal form_, which specifies that the expression contains no more redexes whatsoever, and would require us to reduce the redexes in the right subtree as well. It's possible that normal form evaluation might cause us to evaluate some expressions that never get used, so my implementation only reduces expressions to WHNF (I believe that for a similar reason, some real-world languages like Haskell also adopt WHNF semantics).
+
+
+
+## Rust
+
+
+## The Lambda Calculus
 
 ### Syntax
 
@@ -23,15 +93,13 @@ A program in the lambda calculus is a single big _lambda expression_. A lambda e
 A grammar for the lambda calculus can be given as:
 
 $$
-e -> x | \lambda x. e | e e | (e)
+e \rightarrow x | \lambda x. e | e e | (e)
 $$
 
 Here is an example program in the lambda calculus:
 $$
 (\lambda z. (\lambda x. \lambda y. x) z) (\lambda a. a) ( \lambda b. \lambda c. c)
 $$
-
-
 
 A natural question to ask is: given such a program, how do we execute it?
 
