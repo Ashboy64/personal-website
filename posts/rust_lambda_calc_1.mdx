@@ -132,10 +132,10 @@ $$
 As you can see, the evaluation of $(\lambda a. a) (\lambda b. b)$ is shared between both instances of $f$, so in the final output, $f$ is evaluated to the value $\lambda b. b$ in the argument to $x$. 
 
 Sharing does slightly break the semantics of WHNF because it now might look like some extra expressions were evaluated as compared to true WHNF execution. This is not an issue for two reasons:
-- The Church-Rosser theorem states that the lambda calclus is confluent, i.e., given that $e_1 \rightarrow* e_2$ and $e_1 \rightarrow* e_3$, there must exist some $e_4$ such that $e_2 \rightarrow* e_4$ and $e_3 \rightarrow* e_4$. Thus, even though the exact output strings produced with sharing may look different from those produced by exact WHNF evaluation, they will still be in some sense 'equivalent'.
+- The Church-Rosser theorem states that the lambda calclus is confluent, i.e., given that $e_1 \rightarrow^* e_2$ and $e_1 \rightarrow* e_3$, there must exist some $e_4$ such that $e_2 \rightarrow* e_4$ and $e_3 \rightarrow* e_4$. Thus, even though the exact output strings produced with sharing may look different from those produced by exact WHNF evaluation, they will still be in some sense 'equivalent'.
 - Sharing provides significant efficiency benefits when evaluating lambda calclus programs, and these gains are large enough to warrant violating the 'pure' definition of WHNF.
 
-Despite its benefits, as part of my first pass on the project, I chose not to implement sharing as I wanted to focus on keeping the implementation as conceptually simple as possible. For the same reason, I didn't implement another optimization called De Bruijn indices which would remove the need for alpha-conversion. Implementing sharing and De Bruijn indices are two important extensions I hope to make on this project in the coming months.
+Despite its benefits, I chose not to implement sharing as I wanted to focus on keeping the implementation as conceptually simple as possible. For the same reason, I didn't implement another optimization called De Bruijn indices which would remove the need for explicit alpha conversion. Implementing sharing and De Bruijn indices are two important extensions I hope to make on this project in the coming months.
 
 
 ## Language Syntax
@@ -166,7 +166,7 @@ f (one f x)
 As you can see, users can add comments with '//'. The program consists of a sequence of `def` statements and `eval` statements. Eval statements are the lambda expressions that the interpreter will actually execute. Def statements essentially function as macros. As the interpreter executes an eval statement, if it ever needs to evaluate a variable that looks like a free variable, it will first check if there is a def statement that maps that free variable name to some sub-expression, and if so, the interpreter will substitute that sub-expression into the eval statement and continue execution.
 
 
-## Lexical Analysis, Parsing, and Program AST Representation
+## Lexer and Program AST Representation
 
 The interpreter has three main stages: lexical analysis, parsing, and code execution. As part of lexical analysis, the input program string is turned into a sequence of tokens, each of which belong to some 'token class'. Some token classes include 'whitespace', 'comment', 'identifier', and 'lambda'. The implementation of the lexer is fairly simple. Each token class is associated with a regex, and given an input string, the lexer emits the token which matches the greatest number of characters beginning from the current start of the string. After emitting this token, the starting index is incremented, and the process repeats.
 
@@ -193,7 +193,9 @@ pub enum ExprNode {
 
 This program representation is extremely simple. Using unique Box pointers is a natural fit in this case since I chose not to implement sharing, but when I do implement this, I'll likely have to switch to using Rust's `Rc<T>` type instead.
 
-The parser is a simple recursive descent parser (a fancy way to say backtracking search on grammar production rules). You can read more about recursive descent parsing in [Stanford's CS 143 slides](), or the Dragon Book[]().
+## Parser
+
+The parser is a simple recursive descent parser (a fancy way to say backtracking search on grammar production rules). You can read more about recursive descent parsing in [Stanford's CS 143 slides]() or the [Dragon Book](https://www.amazon.com/Compilers-Principles-Techniques-Tools-2nd/dp/0321486811).
 
 Determining the exact grammar to implement in the parser took a little bit of iterating. Here's a first attempt :
 
@@ -212,12 +214,47 @@ Here's the grammar I ended up implementing:
 $$
 \begin{align*}
 &e \rightarrow \lambda x. e \ | \ \text{app}  \\
-&\text{app} \rightarrow \text{atom} \ | \ \text{atom} \; \text{e} \\
+&\text{app} \rightarrow \text{atom} \; \text{app}  \ | \ \text{atom} \ | \ \lambda x. e  \\
 &\text{atom} \rightarrow (e) \ | \ v \\
 \end{align*}
 $$
 
-To resolve the ambiguity with lambda abstractions, note that we want to invalidate the derivation $e \rightarrow e \ e \rightarrow \lambda x. e \ e$ in our original grammar, because in this case the lambda abstraction does not bind for as much of the string as possible. The above grammar does this by introducing a new nonterminal called $\text{non\_lam}$, which represents expressions that do not start with a lambda abstraction. When we now have function applications, the leftmost nonterminal is always going to be a $\text{non\_lam}$
+To resolve the ambiguity with lambda abstractions, note that we want to invalidate the derivation $e \rightarrow e \ e \rightarrow \lambda x. e \ e$ in our original grammar, because in this case the lambda abstraction does not bind for as much of the string as possible. The above grammar does this by introducing a new nonterminal called $\text{non\_lam}$, which represents expressions that do not start with a lambda abstraction. When we now have chains of function applications like $x y z$, these will have to be generated by a derivation that expands 
+$$
+e \rightarrow \text{app} \rightarrow \text{atom} \; \text{atom} \; ... \text{atom} \; [\text{atom} | \text{lambda} ]
+$$
+
+Since $\text{atom}$ can never start with a lambda abstraction, we will no longer have any of the lambda abstraction ambiguities possible with the initial grammar.
+
+However, a key issue is that this grammar is _right associative_, not left associative as we had wanted. I tried quite hard to come up with a grammar that was not left-recursive but that was left-associative, and was not able to find one. In fact, I have a feeling that this might be impossible. To see this, consider the string $v_1 v_2 v_3 ... v_n$, which we want to parse as $(((v_1 v_2) v_3) ... v_n)$. Say that there is a non-left recursive grammar $G$ that does this, and that $G$ contains exactly $n-2$ nonterminals. Then the parse tree looks something like:
+
+<figure>
+  <img src="/personal-website/rust_lambda_calc_1/left_associative_proof_image.jpg" alt="Left associative parse tree"/>
+  <figcaption className="text-center">Left associative parse tree</figcaption>
+</figure>
+
+The leaves of this parse tree are terminals, and the interior nodes are nonterminals. Let $LUB(v_i, v_j)$ be the nonterminal which is the lowest common ancestor of $v_i$ and $v_j$. It must be the case that $LUB(v_1, v_2) \neq LUB(v_1, v_3) \neq ... \neq LUB(v_1, v_n)$ if the grammar is not left-recursive. This means that $G$ contains at least $n-1$ nonterminals, contradicting the assumption that $G$ contains $n-2$ nonterminals.
+
+Luckily, this does not mean that we need to give up on recursive descent parsing for this use case. We can just fudge the implementation so that after the parser matches a string conforming to the production $\text{app} \rightarrow \text{atom} \; \text{app}  \ | \ \text{atom} \ | \ \lambda x. e$, we _rewire the parse tree_ to make it left associative instead of right associative. My final implementation does this by parsing the atoms forming a function application chain in a loop, and at each iteration, merging the newly parsed atom into the tree built so far in a left associative fashion (sidebar: I was initially doing some recursive rewiring thing which while functional didn't feel super clean; Gemini 2.5 pro suggested the loop approach 😅).
+
+## Execution Engine
+
+The execution engine was by far probably the most challenging part of the project, largely due to some protracted battles I had with Rust's borrow checker. The functionality of the execution engine is conceptually simple; here is some pseudocode summarizing what needs to happen:
+
+```
+// Main execution engine functionality.
+def main_functionality():
+    While the root is a function app and we made a change on the last iter:
+        Recursively evaluate the function side of the application.
+        Check if the function side after evaluation is a lambda abstraction.
+        If it is a lambda abstraction, perform substitution.
+
+// Substitution.
+
+```
+
+
+
 
 ## Battles with the Borrow Checker
 
