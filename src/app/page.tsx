@@ -7,18 +7,18 @@ import React from 'react';
 
 // Greeting on home page.
 function Greeting() {
-  return <h1 className="text-5xl font-bold mb-8">Hello!</h1>;
+  return <h1 className="text-5xl font-bold text-left">Hello!</h1>;
 }
 
 // Blog, resume, and social media links.
 function Links() {
-  // const resumeUrl = (isProd ? "/personal-website/" : "/") + "/resume.pdf";
   const resumeUrl = "/personal-website/resume.pdf";
   const twitterUrl = "https://x.com/Ashboy64";
   const linkedinUrl = "https://www.linkedin.com/in/ashishprao/";
 
+  // Centered on mobile, left-aligned on desktop.
   return (
-    <div className="flex flex-row gap-6 mt-6">
+    <div className="flex flex-row flex-wrap gap-6 mt-6 justify-center md:justify-start">
       <Link href="/blog" className="flex items-center gap-2 text-lg font-semibold text-gray-700 hover:text-black hover:underline transition-colors">
         Blog
       </Link>
@@ -36,21 +36,14 @@ function Links() {
 
 }
 
-// Greeting, bio, and links to display on home page.
-function GreetingAndBio() {
+function Bio() {
   return (
-    <div className="max-w-lg">
-      <Greeting />
-      <p className="text-lg">
-        I&apos;m Ashish Rao, a soon-to-be software engineer at Nvidia working on JAX
-        (a Python library to write hardware accelerated numerical programs).
-        I&apos;m broadly interested in AI, programming languages, compilers,
-        and distributed systems. In my free time, I like reading and going
-        swing dancing. Check out my blog, and feel free to say hello via email
-        to <em>ashish dot arartc at gmail.com</em>.
-      </p>
-      <Links />
-    </div>
+    <p className="text-lg">
+      I&apos;m Ashish Rao, a soon-to-be software engineer at Nvidia working on JAX (a Python library to write hardware accelerated numerical programs).
+      I&apos;m broadly interested in AI, programming languages, compilers,
+      and distributed systems. Check out my blog, and feel free to say hello via email
+      to <em>ashish dot arartc at gmail.com</em>.
+    </p>
   );
 }
 
@@ -62,11 +55,44 @@ function ProfilePicture() {
 // Main home page component.
 export default function HomePage() {
   return (
-    <main className="flex flex-col items-center justify-center min-h-screen p-8">
-      <div className="flex flex-row items-center justify-center gap-32">
-        <GreetingAndBio />
-        <ProfilePicture />
+    <main className="flex items-center justify-center min-h-screen p-8">
+      <div>
+
+        {/* --- MOBILE LAYOUT --- */}
+        {/* This entire div is a flex column, and it's HIDDEN on medium screens and up (md:hidden) */}
+        <div className="flex flex-col items-center gap-8 md:hidden">
+          <div className="w-full max-w-lg">
+            <Greeting />
+          </div>
+          <ProfilePicture />
+            <Links />
+
+          <div className="max-w-lg text-left">
+            <Bio />
+          </div>
+
+        </div>
+
+        {/* --- DESKTOP LAYOUT --- */}
+        {/* This entire div is HIDDEN by default and becomes a flex row on medium screens and up */}
+        <div className="hidden md:flex flex-row items-center gap-32">
+          {/* Desktop Text Container */}
+          <div className="flex flex-col">
+            <Greeting />
+            {/* We add a margin-top here to create the space that was previously on the h1 */}
+            <div className="mt-8">
+              <div className="max-w-lg text-left">
+                <Bio />
+                <Links />
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop Profile Picture */}
+          <ProfilePicture />
+        </div>
+
       </div>
-    </main >
+    </main>
   );
 }
