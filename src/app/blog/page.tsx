@@ -46,7 +46,7 @@ export default async function BlogLandingPage() {
         <div>
             {/* Header Banner */}
             <header className="bg-white py-4 px-8 border-b border-gray-400">
-                <nav className="max-w-3xl mx-auto flex justify-start items-center gap-x-6">
+                <nav className="max-w-5xl mx-auto flex justify-start items-center gap-x-6">
                     <Link href="/" className="font-semibold text-gray-700 hover:text-black hover:underline transition-colors">
                         About
                     </Link>
@@ -54,15 +54,22 @@ export default async function BlogLandingPage() {
             </header>
 
             <main className="max-w-3xl mx-auto p-8">
-                <div className="space-y-8">
+                <div>
                     {posts.map(post => (
                         <Link href={`/blog/${post.post_id}`} key={post.post_id} className="block group">
-                            <div className="p-6 border border-gray-400 rounded-lg hover:shadow-md transition-shadow duration-300">
-                                <h2 className="text-3xl font-semibold group-hover:text-blue-600 transition-colors">
-                                    {post.title}
-                                </h2>
-                                <p className="text-gray-500 mt-1">{new Date(post.date).toLocaleDateString('en-US', { timeZone: 'UTC', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                                <p className="text-lg mt-2">{post.description}</p>
+                            <div className="py-6 flex justify-between items-baseline border-b border-gray-200">
+                                {/* Left side: Title and Description */}
+                                <div>
+                                    <h2 className="text-2xl font-semibold group-hover:text-blue-600 transition-colors">
+                                        {post.title}
+                                    </h2>
+                                    <p className="text-gray-600 mt-2">{post.description}</p>
+                                </div>
+
+                                {/* Right side: Date */}
+                                <p className="text-sm text-gray-500 ml-6 flex-shrink-0">
+                                    {new Date(post.date).toLocaleDateString('en-US', { timeZone: 'UTC', year: 'numeric', month: 'long', day: 'numeric' })}
+                                </p>
                             </div>
                         </Link>
                     ))}

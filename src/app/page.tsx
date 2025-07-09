@@ -16,24 +16,22 @@ function Links() {
   const twitterUrl = "https://x.com/Ashboy64";
   const linkedinUrl = "https://www.linkedin.com/in/ashishprao/";
 
-  // Centered on mobile, left-aligned on desktop.
   return (
-    <div className="flex flex-row flex-wrap gap-6 mt-6 justify-center md:justify-start">
-      <Link href="/blog" className="flex items-center gap-2 text-lg font-semibold text-gray-700 hover:text-black hover:underline transition-colors">
+    <nav className="flex justify-start items-center gap-x-6">
+      <Link href="/blog" className="flex items-center gap-2 font-semibold text-gray-700 hover:text-black hover:underline transition-colors">
         Blog
       </Link>
-      <a href={resumeUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-lg font-semibold text-gray-700 hover:text-black hover:underline transition-colors">
+      <a href={resumeUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 font-semibold text-gray-700 hover:text-black hover:underline transition-colors">
         Resume
       </a>
-      <a href={twitterUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-lg font-semibold text-gray-700 hover:text-black hover:underline transition-colors">
+      <a href={twitterUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 font-semibold text-gray-700 hover:text-black hover:underline transition-colors">
         Twitter
       </a>
-      <a href={linkedinUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-lg font-semibold text-gray-700 hover:text-black hover:underline transition-colors">
+      <a href={linkedinUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 font-semibold text-gray-700 hover:text-black hover:underline transition-colors">
         LinkedIn
       </a>
-    </div>
+    </nav>
   );
-
 }
 
 function Bio() {
@@ -52,47 +50,50 @@ function ProfilePicture() {
   return <Image src="/personal-website/rome_photo.jpg" width={400} height={533} alt="Picture of Ashish Rao" className="rounded-lg" />;
 }
 
-// Main home page component.
 export default function HomePage() {
   return (
-    <main className="flex items-center justify-center min-h-screen p-8">
-      <div>
-
-        {/* --- MOBILE LAYOUT --- */}
-        {/* This entire div is a flex column, and it's HIDDEN on medium screens and up (md:hidden) */}
-        <div className="flex flex-col items-center gap-8 md:hidden">
-          <div className="w-full max-w-lg">
-            <Greeting />
-          </div>
-          <ProfilePicture />
-            <Links />
-
-          <div className="max-w-lg text-left">
-            <Bio />
-          </div>
-
+    // On screens smaller than `lg`, this is a flex column, ensuring no overlap.
+    // On `lg` screens and larger, it becomes a simple block container to enable
+    // the absolute positioning layout for the header.
+    <div className="min-h-screen flex flex-col lg:block">
+      
+      {/* On `lg` and up, the header is taken out of the document flow. */}
+      <header className="bg-white py-4 px-8 border-b border-gray-400 z-10 lg:absolute lg:top-0 lg:w-full">
+        <div className="max-w-5xl mx-auto">
+          <Links />
         </div>
+      </header>
 
-        {/* --- DESKTOP LAYOUT --- */}
-        {/* This entire div is HIDDEN by default and becomes a flex row on medium screens and up */}
-        <div className="hidden md:flex flex-row items-center gap-32">
-          {/* Desktop Text Container */}
-          <div className="flex flex-col">
-            <Greeting />
-            {/* We add a margin-top here to create the space that was previously on the h1 */}
-            <div className="mt-8">
-              <div className="max-w-lg text-left">
-                <Bio />
-                <Links />
-              </div>
+      {/* On mobile, this grows to fill the available space below the header.
+          On `lg` and up, flex-grow is disabled, and it spans the full screen
+          height to allow for perfect centering. */}
+      <main className="flex flex-grow items-center justify-center p-8 lg:flex-grow-0 lg:min-h-screen">
+        <div className="max-w-5xl mx-auto w-full">
+          {/* --- MOBILE LAYOUT --- */}
+          <div className="flex flex-col items-center gap-8 md:hidden">
+            <div className="w-full max-w-lg">
+              <Greeting />
+            </div>
+            <ProfilePicture />
+            <div className="max-w-lg text-left">
+              <Bio />
             </div>
           </div>
 
-          {/* Desktop Profile Picture */}
-          <ProfilePicture />
+          {/* --- DESKTOP LAYOUT --- */}
+          <div className="hidden md:flex flex-row items-center gap-32">
+            <div className="flex flex-col">
+              <Greeting />
+              <div className="mt-8">
+                <div className="max-w-lg text-left">
+                  <Bio />
+                </div>
+              </div>
+            </div>
+            <ProfilePicture />
+          </div>
         </div>
-
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }

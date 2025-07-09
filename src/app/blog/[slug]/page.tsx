@@ -42,7 +42,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         <div>
             {/* Header Banner */}
             <header className="bg-white py-4 px-8 border-b border-gray-400">
-                <nav className="max-w-3xl mx-auto flex justify-start items-center gap-x-6">
+                <nav className="max-w-5xl mx-auto flex justify-start items-center gap-x-6">
                     <Link href="/blog" className="font-semibold text-gray-700 hover:text-black hover:underline transition-colors">
                         Home
                     </Link>
