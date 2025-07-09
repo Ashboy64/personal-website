@@ -43,25 +43,33 @@ export default async function BlogLandingPage() {
     const posts = await getPosts();
 
     return (
-        <main className="max-w-3xl mx-auto p-8">
-
-            <div className="w-full flex justify-end mb-12">
-                <Link href="/" className="flex items-center gap-2 text-lg font-semibold text-gray-700 hover:text-black hover:underline transition-colors">
-                    About
-                </Link>
-            </div>
-
-            <div className="space-y-8">
-                {posts.map(post => (
-                    <Link href={`/blog/${post.post_id}`} key={post.post_id} className="block group">
-                        <h2 className="text-3xl font-semibold group-hover:text-blue-600 transition-colors">
-                            {post.title}
-                        </h2>
-                        <p className="text-gray-500 mt-1">{new Date(post.date).toLocaleDateString('en-US', { timeZone: 'UTC', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                        <p className="text-lg mt-2">{post.description}</p>
+        <div>
+            {/* Header Banner */}
+            <header className="bg-white py-4 px-8 border-b border-gray-400">
+                <nav className="max-w-3xl mx-auto flex justify-start items-center gap-x-6">
+                    <Link href="/" className="font-semibold text-gray-700 hover:text-black hover:underline transition-colors">
+                        About
                     </Link>
-                ))}
-            </div>
-        </main>
+                </nav>
+            </header>
+
+            <main className="max-w-3xl mx-auto p-8">
+                <div className="space-y-8">
+                    {posts.map(post => (
+                        <Link href={`/blog/${post.post_id}`} key={post.post_id} className="block group">
+                            <div className="p-6 border border-gray-400 rounded-lg hover:shadow-md transition-shadow duration-300">
+                                <h2 className="text-3xl font-semibold group-hover:text-blue-600 transition-colors">
+                                    {post.title}
+                                </h2>
+                                <p className="text-gray-500 mt-1">{new Date(post.date).toLocaleDateString('en-US', { timeZone: 'UTC', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                                <p className="text-lg mt-2">{post.description}</p>
+                            </div>
+                        </Link>
+                    ))}
+                </div>
+
+
+            </main>
+        </div>
     );
 }
